@@ -1,0 +1,149 @@
+SizedBox(
+                      width: screenWidth * 0.6, // Increased width
+                      child: ElevatedButton.icon(
+                        onPressed: _isLoading
+                            ? null
+                            : () async {
+                                // Check form validation
+                                if (_formKey.currentState!.validate()) {
+                                  // Check required file condition
+                                  if (_isGovtServant &&
+                                      _uploadedFile_name == null) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                            'Please upload the supporting document.'),
+                                      ),
+                                    );
+                                    return;
+                                  }
+
+                                  // Validate check-in and check-out date
+                                  if (DateTime.parse(_checkInController.text)
+                                      .isAfter(DateTime.parse(
+                                          _checkOutController.text))) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                            'Check-in date should be before Check-out date.'),
+                                      ),
+                                    );
+                                    return;
+                                  }
+
+                                  // Set loading state to true and update the UI
+                                  setState(() {
+                                    _isLoading = true;
+                                  });
+
+                                  // Ensure the UI updates before the async call
+                                  WidgetsBinding.instance
+                                      .addPostFrameCallback((_) async {
+                                    try {
+                                      // Construct the API payload
+                                      int _guest_house_id = widget.guestHouseId;
+                                      String _name = _nameController.text;
+                                      String _address = _addressController.text;
+                                      String _desig =
+                                          _designationController.text;
+                                      String _dept = _departmentController.text;
+                                      String _id_card_no =
+                                          _idCardController.text;
+                                      String _is_govt_serv =
+                                          _isGovtServant ? "Yes" : "No";
+                                      String _is_gazetted =
+                                          _isGazettedOfficer ? "Yes" : "No";
+                                      String _phn_no = _mobno ?? "";
+                                      String _email = _emailController.text;
+                                      String _room_type_id =
+                                          _roomTypeId.toString();
+                                      DateTime _check_in = DateTime.parse(
+                                          _checkInController.text);
+                                      DateTime _check_out = DateTime.parse(
+                                          _checkOutController.text);
+                                      String _doc_name =
+                                          _uploadedFile_name ?? "";
+                                      String _doc_ext = "pdf";
+                                      String _doc_content =
+                                          _uploadedFile_content ?? "";
+                                      String _booking_purpose =
+                                          _bookingPurpose ?? "";
+                                      String _booking_type_id =
+                                          _bookingTypeId.toString();
+                                      int _no_of_rooms = _noOfRooms;
+
+                                      // Call the submit service
+                                      final response = await SubmitFormService()
+                                          .submitBookingForm(
+                                        guestHouseId: _guest_house_id,
+                                        name: _name,
+                                        address: _address,
+                                        designation: _desig,
+                                        department: _dept,
+                                        idCardNo: _id_card_no,
+                                        isGovtEmployee: _is_govt_serv,
+                                        isGazettedEmployee: _is_gazetted,
+                                        phoneNo: _phn_no,
+                                        emailId: _email,
+                                        roomTypeId: _room_type_id,
+                                        checkInDate: _check_in.toString(),
+                                        checkOutDate: _check_out.toString(),
+                                        docName: _doc_name,
+                                        docExt: _doc_ext,
+                                        docContent: _doc_content,
+                                        bookingPurpose: _booking_purpose,
+                                        bookingTypeId: _booking_type_id,
+                                        noOfRooms: _no_of_rooms,
+                                      );
+
+                                      // Set loading state to false after API call
+                                      setState(() {
+                                        _isLoading = false;
+                                      });
+
+                                      // Handle the response
+                                      if (response.status == 'S') {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                EnteredDetailsScreen(
+                                                    apiResponse: response),
+                                          ),
+                                        );
+                                      } else {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                                "Error: Failed to submit or check your internet"),
+                                          ),
+                                        );
+                                      }
+                                    } catch (error) {
+                                      setState(() {
+                                        _isLoading = false;
+                                      });
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                              'Error: Server Error or check your internet'),
+                                        ),
+                                      );
+                                    }
+                                  });
+                                }
+                              },
+                        icon: _isLoading
+                            ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.0, // Smaller loading icon
+                                ),
+                              )
+                            : const Icon(Icons.arrow_forward),
+                        label: const Text('Submit'),
+                      ),
+                    ),
